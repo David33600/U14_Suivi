@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi Match U14</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PWA Meta tags -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Match U14">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlN1aXZpIE1hdGNoIFUxNCIsCiAgInNob3J0X25hbWUiOiAiTWF0Y2ggVTE0IiwKICAic3RhcnRfdXJsIjogIi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmOWZhZmIiLAogICJ0aGVtZV9jb2xvciI6ICIjMjU2M2ViIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCM2FXUjBhRDBpTWpRaUlHaGxhV2RvZEQwaU1qUWlJSFpwWlhkQ2IzZzlJakFnTUNBeU5DQXlOQ0lnWm1sc2JEMGlJekkxTmpObFlpSStQR05wY21Oc1pTQmplRDBpTVRJaUlHTjVQU0l4TWlJZ2NqMGlPU0lnWm1sc2JEMGlJekZHUXpRek5pSXZQand2YzNablBnPT0iLAogICAgICAic2l6ZXMiOiAiMjR4MjQiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
+    
+    <style>
+        /* Custom styles for better mobile experience */
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        input, select {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            user-select: text;
+        }
+        
+        .touch-friendly {
+            min-height: 44px;
+            min-width: 44px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+
+        // Icons components
+        const Play = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5,3 19,12 5,21"></polygon></svg>;
+        const Pause = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>;
+        const RotateCcw = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1,4 1,10 7,10"></polyline><path d="M3.51,15a9,9,0,0,0,14.85-3.36,9,9,0,0,0-9.6-10.25L1,10"></path></svg>;
+        const Plus = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+        const Minus = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+        const Target = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>;
+        const Shield = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12,22s8-4,8-10V5l-8-3L4,5v7C4,18,12,22,12,22z"></path></svg>;
+        const Users = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16,21v-2a4,4,0,0,0-4-4H6a4,4,0,0,0-4,4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22,21v-2a4,4,0,0,0-3-3.87"></path><path d="M16,3.13a4,4,0,0,1,0,7.75"></path></svg>;
+        const Clock = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>;
+
+        function U14MatchTracker() {
+            const [player, setPlayer] = useState({
+                name: '',
+                number: '',
+                position: 'Milieu'
+            });
+
+            const [matchInfo, setMatchInfo] = useState({
+                opponent: '',
+                date: new Date().toISOString().split('T')[0],
+                competition: ''
+            });
+
+            const [timer, setTimer] = useState({
+                minutes: 0,
+                seconds: 0,
+                isRunning: false,
+                startTime: null
+            });
+
+            const [stats, setStats] = useState({
+                goals: 0,
+                assists: 0,
+                shots: 0,
+                shotsOnTarget: 0,
+                passes: 0,
+                successfulPasses: 0,
+                tackles: 0,
+                interceptions: 0,
+                fouls: 0,
+                yellowCards: 0,
+                redCards: 0,
+                corners: 0,
+                crosses: 0
+            });
+
+            const [events, setEvents] = useState([]);
+
+            // Timer logic
+            useEffect(() => {
+                let interval = null;
+                if (timer.isRunning) {
+                    interval = setInterval(() => {
+                        const now = Date.now();
+                        const elapsed = Math.floor((now - timer.startTime) / 1000);
+                        setTimer(prev => ({
+                            ...prev,
+                            minutes: Math.floor(elapsed / 60),
+                            seconds: elapsed % 60
+                        }));
+                    }, 1000);
+                }
+                return () => clearInterval(interval);
+            }, [timer.isRunning, timer.startTime]);
+
+            const startTimer = () => {
+                setTimer(prev => ({
+                    ...prev,
+                    isRunning: true,
+                    startTime: Date.now() - (prev.minutes * 60 + prev.seconds) * 1000
+                }));
+            };
+
+            const pauseTimer = () => {
+                setTimer(prev => ({ ...prev, isRunning: false }));
+            };
+
+            const resetTimer = () => {
+                setTimer({
+                    minutes: 0,
+                    seconds: 0,
+                    isRunning: false,
+                    startTime: null
+                });
+            };
+
+            const addEvent = (type, description) => {
+                const timeStamp = `${timer.minutes.toString().padStart(2, '0')}:${timer.seconds.toString().padStart(2, '0')}`;
+                setEvents(prev => [...prev, {
+                    id: Date.now(),
+                    time: timeStamp,
+                    type,
+                    description
+                }]);
+            };
+
+            const updateStat = (statKey, increment = true) => {
+                setStats(prev => ({
+                    ...prev,
+                    [statKey]: Math.max(0, prev[statKey] + (increment ? 1 : -1))
+                }));
+                
+                const actionMap = {
+                    goals: 'But marqué',
+                    assists: 'Passe décisive',
+                    shots: 'Tir tenté',
+                    shotsOnTarget: 'Tir cadré',
+                    passes: 'Passe tentée',
+                    successfulPasses: 'Passe réussie',
+                    tackles: 'Tacle',
+                    interceptions: 'Interception',
+                    fouls: 'Faute commise',
+                    yellowCards: 'Carton jaune',
+                    redCards: 'Carton rouge',
+                    corners: 'Corner tiré',
+                    crosses: 'Centre'
+                };
+
+                if (increment) {
+                    addEvent(statKey, actionMap[statKey]);
+                }
+            };
+
+            const StatButton = ({ label, value, statKey, icon: Icon, color = "bg-blue-500" }) => (
+                <div className="bg-white rounded-lg shadow p-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                            <Icon />
+                            <span className="font-medium text-sm">{label}</span>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-white text-lg font-bold ${color}`}>
+                            {value}
+                        </span>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => updateStat(statKey, true)}
+                            className="flex-1 bg-green-500 text-white py-3 rounded-md font-medium hover:bg-green-600 transition-colors touch-friendly flex items-center justify-center"
+                        >
+                            <Plus />
+                        </button>
+                        <button
+                            onClick={() => updateStat(statKey, false)}
+                            className="flex-1 bg-red-500 text-white py-3 rounded-md font-medium hover:bg-red-600 transition-colors touch-friendly flex items-center justify-center"
+                        >
+                            <Minus />
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const positions = ['Gardien', 'Défenseur', 'Milieu', 'Attaquant'];
+
+            return (
+                <div className="max-w-md mx-auto bg-gray-50 min-h-screen">
+                    {/* Header */}
+                    <div className="bg-blue-600 text-white p-4">
+                        <h1 className="text-xl font-bold text-center">Suivi Match U14</h1>
+                    </div>
+
+                    {/* Player Info */}
+                    <div className="p-4 bg-white border-b">
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            <input
+                                type="text"
+                                placeholder="Nom du joueur"
+                                value={player.name}
+                                onChange={(e) => setPlayer(prev => ({ ...prev, name: e.target.value }))}
+                                className="border rounded-md px-3 py-2 text-sm touch-friendly"
+                            />
+                            <input
+                                type="number"
+                                placeholder="N°"
+                                value={player.number}
+                                onChange={(e) => setPlayer(prev => ({ ...prev, number: e.target.value }))}
+                                className="border rounded-md px-3 py-2 text-sm touch-friendly"
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            <select
+                                value={player.position}
+                                onChange={(e) => setPlayer(prev => ({ ...prev, position: e.target.value }))}
+                                className="border rounded-md px-3 py-2 text-sm touch-friendly"
+                            >
+                                {positions.map(pos => (
+                                    <option key={pos} value={pos}>{pos}</option>
+                                ))}
+                            </select>
+                            <input
+                                type="text"
+                                placeholder="Adversaire"
+                                value={matchInfo.opponent}
+                                onChange={(e) => setMatchInfo(prev => ({ ...prev, opponent: e.target.value }))}
+                                className="border rounded-md px-3 py-2 text-sm touch-friendly"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Timer */}
+                    <div className="p-4 bg-white border-b">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Clock />
+                                <span className="font-medium">Temps de jeu</span>
+                            </div>
+                            <div className="text-2xl font-bold text-blue-600">
+                                {timer.minutes.toString().padStart(2, '0')}:{timer.seconds.toString().padStart(2, '0')}
+                            </div>
+                        </div>
+                        <div className="flex gap-2 mt-3">
+                            <button
+                                onClick={startTimer}
+                                className="flex-1 bg-green-500 text-white py-3 rounded-md font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2 touch-friendly"
+                            >
+                                <Play />
+                                Start
+                            </button>
+                            <button
+                                onClick={pauseTimer}
+                                className="flex-1 bg-yellow-500 text-white py-3 rounded-md font-medium hover:bg-yellow-600 transition-colors flex items-center justify-center gap-2 touch-friendly"
+                            >
+                                <Pause />
+                                Pause
+                            </button>
+                            <button
+                                onClick={resetTimer}
+                                className="flex-1 bg-red-500 text-white py-3 rounded-md font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2 touch-friendly"
+                            >
+                                <RotateCcw />
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Statistics */}
+                    <div className="p-4 space-y-4">
+                        <h2 className="text-lg font-bold text-gray-800">Statistiques</h2>
+                        
+                        {/* Attack Stats */}
+                        <div className="space-y-3">
+                            <h3 className="font-medium text-gray-700 border-b pb-1">Attaque</h3>
+                            <StatButton 
+                                label="Buts" 
+                                value={stats.goals} 
+                                statKey="goals" 
+                                icon={Target}
+                                color="bg-green-600"
+                            />
+                            <StatButton 
+                                label="Passes décisives" 
+                                value={stats.assists} 
+                                statKey="assists" 
+                                icon={Users}
+                                color="bg-blue-600"
+                            />
+                            <StatButton 
+                                label="Tirs" 
+                                value={stats.shots} 
+                                statKey="shots" 
+                                icon={Target}
+                                color="bg-orange-500"
+                            />
+                            <StatButton 
+                                label="Tirs cadrés" 
+                                value={stats.shotsOnTarget} 
+                                statKey="shotsOnTarget" 
+                                icon={Target}
+                                color="bg-orange-600"
+                            />
+                        </div>
+
+                        {/* Passing Stats */}
+                        <div className="space-y-3">
+                            <h3 className="font-medium text-gray-700 border-b pb-1">Passes</h3>
+                            <StatButton 
+                                label="Passes tentées" 
+                                value={stats.passes} 
+                                statKey="passes" 
+                                icon={Users}
+                                color="bg-purple-500"
+                            />
+                            <StatButton 
+                                label="Passes réussies" 
+                                value={stats.successfulPasses} 
+                                statKey="successfulPasses" 
+                                icon={Users}
+                                color="bg-purple-600"
+                            />
+                            <div className="text-sm text-gray-600 text-center">
+                                Précision: {stats.passes > 0 ? Math.round((stats.successfulPasses / stats.passes) * 100) : 0}%
+                            </div>
+                        </div>
+
+                        {/* Defense Stats */}
+                        <div className="space-y-3">
+                            <h3 className="font-medium text-gray-700 border-b pb-1">Défense</h3>
+                            <StatButton 
+                                label="Tacles" 
+                                value={stats.tackles} 
+                                statKey="tackles" 
+                                icon={Shield}
+                                color="bg-indigo-600"
+                            />
+                            <StatButton 
+                                label="Interceptions" 
+                                value={stats.interceptions} 
+                                statKey="interceptions" 
+                                icon={Shield}
+                                color="bg-indigo-500"
+                            />
+                        </div>
+
+                        {/* Discipline */}
+                        <div className="space-y-3">
+                            <h3 className="font-medium text-gray-700 border-b pb-1">Discipline</h3>
+                            <StatButton 
+                                label="Fautes" 
+                                value={stats.fouls} 
+                                statKey="fouls" 
+                                icon={Users}
+                                color="bg-yellow-500"
+                            />
+                            <StatButton 
+                                label="Cartons jaunes" 
+                                value={stats.yellowCards} 
+                                statKey="yellowCards" 
+                                icon={Users}
+                                color="bg-yellow-600"
+                            />
+                            <StatButton 
+                                label="Cartons rouges" 
+                                value={stats.redCards} 
+                                statKey="redCards" 
+                                icon={Users}
+                                color="bg-red-600"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Events Timeline */}
+                    {events.length > 0 && (
+                        <div className="p-4 bg-white border-t">
+                            <h3 className="font-medium text-gray-700 mb-3">Chronologie du match</h3>
+                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {events.slice(-5).reverse().map(event => (
+                                    <div key={event.id} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded">
+                                        <span className="font-medium text-blue-600">{event.time}</span>
+                                        <span className="text-gray-700">{event.description}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Summary */}
+                    <div className="p-4 bg-blue-50 border-t mb-4">
+                        <h3 className="font-medium text-gray-700 mb-2">Résumé de performance</h3>
+                        <div className="text-sm text-gray-600 space-y-1">
+                            <div>Actions offensives: {stats.goals + stats.assists + stats.shots}</div>
+                            <div>Actions défensives: {stats.tackles + stats.interceptions}</div>
+                            <div>Efficacité passes: {stats.passes > 0 ? `${Math.round((stats.successfulPasses / stats.passes) * 100)}%` : 'N/A'}</div>
+                            <div>Efficacité tirs: {stats.shots > 0 ? `${Math.round((stats.shotsOnTarget / stats.shots) * 100)}%` : 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        const root = createRoot(document.getElementById('root'));
+        root.render(<U14MatchTracker />);
+    </script>
+</body>
+</html>
